@@ -9,7 +9,7 @@
 #include <vdr/plugin.h>
 #include "scanmenu.h"
 
-static const char *VERSION        = "0.0.2";
+static const char *VERSION        = "0.0.3";
 static const char *DESCRIPTION    = "scan channels using wirbelscan";
 static const char *MAINMENUENTRY  = "Channel Scan";
 

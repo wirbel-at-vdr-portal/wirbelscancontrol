@@ -10,6 +10,7 @@
 #include <vdr/menuitems.h>
 #include <vdr/device.h>
 #include <vdr/config.h>
+#include <vdr/channels.h>
 #include "scanmenu.h"
 #include "wirbelscan_services.h"
 using namespace WIRBELSCAN_SERVICE;
@@ -103,7 +104,7 @@ cMenuEditSubItem::cMenuEditSubItem(const char *Name, int *Value, int NumStrings,
   while (! allowed[*value]) {
       *value = *value + 1;
       if (*value > maxval)
-          *value = *value = 0;
+          *value = 0;
       oldval = *value - 1;
       }
   Set();
@@ -268,7 +269,10 @@ eOSState cScanOSD::ProcessKey(eKeys Key)
                         case SETSCAN:
                           osdstatus = SCANNING;
                           start = time(NULL);
-                          channelcount0 = Channels.Count();
+                          {
+                          LOCK_CHANNELS_READ;
+                          channelcount0 = Channels->Count();
+                          }
                           SetHelp(tr("Stop"), NULL, NULL, NULL);
                           TransferSetup();
                           PutCommand(CmdStartScan);
@@ -373,7 +377,7 @@ void cScanOSD::SetBySource(int View, int direction)
       transmission = t->Transmission();
       useNit       = t->UseNit();
       symbolrate   = t->Symbolrate();
-      satsystem    = t->Satsystem();
+      satsystem    = t->System();
       polarisation = t->Polarisation();
       rolloff      = t->Rolloff();
       type         = t->Type();
@@ -655,18 +659,21 @@ void cScanOSD::Update(void)
   sbuf = cString::sprintf("%s (%d%% transponders from scan list + %u queued)", buf, status.progress, status.nextTransponders);
   ProgressBar->SetText(*sbuf);
 
+  {
+  LOCK_CHANNELS_READ;
   if (TV1 && TV2 && TV3 && TV4 && TV5)
-     switch (Channels.Count() - channelcount0) {
+     switch (Channels->Count() - channelcount0) {
          default:;
-         case 5: TV5->SetText(Channels.GetByNumber(Channels.Count()-4)->Name());
-         case 4: TV4->SetText(Channels.GetByNumber(Channels.Count()-3)->Name());
-         case 3: TV3->SetText(Channels.GetByNumber(Channels.Count()-2)->Name());
-         case 2: TV2->SetText(Channels.GetByNumber(Channels.Count()-1)->Name());
-         case 1: TV1->SetText(Channels.GetByNumber(Channels.Count()-0)->Name());
+         case 5: TV5->SetText(Channels->GetByNumber(Channels->Count()-4)->Name());
+         case 4: TV4->SetText(Channels->GetByNumber(Channels->Count()-3)->Name());
+         case 3: TV3->SetText(Channels->GetByNumber(Channels->Count()-2)->Name());
+         case 2: TV2->SetText(Channels->GetByNumber(Channels->Count()-1)->Name());
+         case 1: TV1->SetText(Channels->GetByNumber(Channels->Count()-0)->Name());
          case 0:; 
          }
 
-  sbuf = cString::sprintf("%s%d", tr("New channels: "), Channels.Count() - channelcount0);
+  sbuf = cString::sprintf("%s%d", tr("New channels: "), Channels->Count() - channelcount0);
+  }
   if (CH) CH->SetText(*sbuf);
 
   Display();
